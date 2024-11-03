@@ -73,7 +73,7 @@ class built_window(QWidget):
        # left_layout.addItem(item_space)
         return frame1
   
-    def choose_model(self):
+    def choose_model(self):#选择模型功能
 
         from button_actions import choose_btn
         win_choose = choose_btn(self)
