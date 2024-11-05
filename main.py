@@ -8,23 +8,23 @@ class MainWindow(QMainWindow):
 
     def initUI(self):
         self.setWindowTitle("gui")
-        self.resize(1200,700)
+        self.resize(1500,900)
         self.setMinimumSize(500,500)
-
+        
         # 创建 QStackedWidget
         self.stacked_widget = QStackedWidget(self)
 
         # 创建页面
         #待重写
         self.home_page = self.homepage("首页")
-        self.choose_page = self.choosepage("选择模型")
-        self.download_page = self.createPage("下载")
+        self.choose_page = self.choosepage("选择下载模型")
+       # self.download_page = self.createPage("")
         self.theme_page = self.createPage("主题")
 
         # 将页面添加到 QStacked_widget栈页面
         self.stacked_widget.addWidget(self.home_page)
         self.stacked_widget.addWidget(self.choose_page)
-        self.stacked_widget.addWidget(self.download_page)
+        #self.stacked_widget.addWidget(self.download_page)
         self.stacked_widget.addWidget(self.theme_page)
 
         # 创建左侧按钮栏
@@ -35,14 +35,14 @@ class MainWindow(QMainWindow):
         btn_start.setFixedHeight(100)
         btn_start.clicked.connect(lambda: self.stacked_widget.setCurrentIndex(0))
        # btn_start.setMinimumWidth(150)
-        btn_choose = QPushButton("选择模型")
+        btn_choose = QPushButton("选择下载模型")
         btn_choose.setFixedHeight(100)
         btn_choose.clicked.connect(lambda: self.stacked_widget.setCurrentIndex(1))
        # btn_choose.clicked.connect(self.choose_model)#绑定事件
     
-        btn_download = QPushButton("下载模型")
-        btn_download.setFixedHeight(100)
-        btn_download.clicked.connect(lambda: self.stacked_widget.setCurrentIndex(2))
+        # btn_download = QPushButton("下载模型")
+        # btn_download.setFixedHeight(100)
+        # btn_download.clicked.connect(lambda: self.stacked_widget.setCurrentIndex(2))
 
         btn_theme = QPushButton("切换主题")
         btn_theme.setFixedHeight(100)
@@ -50,9 +50,10 @@ class MainWindow(QMainWindow):
 
         self.left_layout.addWidget(btn_start)
         self.left_layout.addWidget(btn_choose)
-        self.left_layout.addWidget(btn_download)
-        self.left_layout.addWidget(btn_theme)
+      #  self.left_layout.addWidget(btn_download)
         self.left_layout.addStretch()
+        self.left_layout.addWidget(btn_theme)
+        
 
         # 设置主窗口的布局
         self.main_layout = QHBoxLayout()#水平的
@@ -61,7 +62,7 @@ class MainWindow(QMainWindow):
         frame1.setFrameShape(QFrame.Box)
         frame1.setLineWidth(1)
         frame1.setBaseSize(200,900)
-        frame1.setFixedWidth(200)
+        frame1.setFixedWidth(150)
         frame1.setLayout(self.left_layout)
 
         self.main_layout.addWidget(frame1)
