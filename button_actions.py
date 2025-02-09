@@ -2,18 +2,20 @@ from PyQt5.QtWidgets import QApplication, QWidget, QPushButton, QDialog, QVBoxLa
 from PyQt5.QtWidgets import QHBoxLayout,QVBoxLayout,QStackedWidget
 from PyQt5.QtWidgets import QLineEdit,QTextEdit,QToolTip,QRadioButton
 from PyQt5.QtWidgets import QTableWidget,QSpacerItem, QSizePolicy
-from PyQt5.QtWidgets import QTableWidgetItem,QWhatsThis,QMessageBox
+from PyQt5.QtWidgets import QTableWidgetItem,QComboBox
 from PyQt5.QtCore import Qt,QEvent
 
+import pymysql
+
 Width = [200,400,150,200,100,80]
-Tags = ["模型名","说明","参数","主页","文件大小","是否下载","类型"]
+Tags = ["模型名","说明","参数-大小","主页","是否下载","类型"]
 
 
 
 #选择模型类
 class choose_page(QWidget):
     def __init__(self, parent =None):
-        super().__init__(parent)
+        super().__init__(parent) 
 
         self.setWindowTitle("选择模型")
         self.resize(700,700)
@@ -54,7 +56,7 @@ class choose_page(QWidget):
         act_layout.addWidget(btn_reset)
         return act_layout
 
-#模型类型
+#模型类型页
     def init_modle(self,):
         modle_layout = QHBoxLayout()
 
@@ -77,14 +79,14 @@ class choose_page(QWidget):
         return modle_layout
 
        
-#模型表
+#模型tools表
     def init_table_tools(self):
 
         tools_widget = QWidget()
 
         widget_layout = QVBoxLayout()
 
-        
+    
         #创建水平视图#搜索栏
         seach_layout = QHBoxLayout()
         seach_text_area = QTextEdit()#搜索框
@@ -105,15 +107,47 @@ class choose_page(QWidget):
         for i,width in enumerate(Width):
             table_widget.setColumnWidth(i,width)
        # table_widget.setFixedHeight(650)
-        table_widget.setHorizontalHeaderLabels(Tags[:-1])
+        table_widget.setHorizontalHeaderLabels(Tags[:-1])#去掉最后一列
 
+        connect = pymysql.connect(host='localhost',
+                                  user='root',
+                                  password='xxlong727',
+                                  database='model_ollama',
+                                  charset='utf8mb4')
+        with connect.cursor() as cursor:
+            
+            try:
+                query = """
+                        SELECT model.model_id, model.name, model.description, model.home, model.isdownloaded, model.type,
+                            parameters.para_id,parameters.size_storage
+                        FROM model
+                        JOIN parameters ON model.model_id = parameters.model_id
+                        WHERE model.type = 'tools';
+                        """
+                cursor.execute(query)
+                data = cursor.fetchall()
+                #print(1111111111111111111111)
+                #print(data)
+                row = 0
+                for model_data in data:
+                    table_widget.setItem(row, 0, QTableWidgetItem(model_data[1]))
+                    table_widget.setItem(row, 1, QTableWidgetItem(model_data[2]))
+                    table_widget.setItem(row, 2, QTableWidgetItem(model_data[7]))
+                    table_widget.setItem(row, 3, QTableWidgetItem(model_data[3]))
+                    table_widget.setItem(row, 4, QTableWidgetItem(str(model_data[4])))
+                    table_widget.setItem(row, 5, QTableWidgetItem(model_data[4]))
+                    # 为参数大小列添加QComboBox
+                    
+                    row += 1
+            except pymysql.MySQLError as e:
+                print(f"Error fetching data: {e}")
 
-        widget_layout.addWidget(table_widget)
+        widget_layout.addWidget(table_widget) 
        
         tools_widget.setLayout(widget_layout)
 
         return tools_widget
-
+#视觉模型
     def init_table_vision(self):
 
         vision_widget = QWidget()
@@ -122,7 +156,7 @@ class choose_page(QWidget):
 
         
         #创建水平视图#搜索栏
-        seach_layout = QHBoxLayout()
+        seach_layout = QHBoxLayout()  
         seach_text_area = QTextEdit()#搜索框
        # seach_text_area.setFixedSize(300,40)
         seach_text_area.setMaximumHeight(40)
@@ -141,15 +175,46 @@ class choose_page(QWidget):
         for i,width in enumerate(Width):
             table_widget.setColumnWidth(i,width)
        # table_widget.setFixedHeight(650)
-        table_widget.setHorizontalHeaderLabels(Tags[:-1])
-
+        table_widget.setHorizontalHeaderLabels(Tags[:-1])#去掉最后一列 
+        connect = pymysql.connect(host='localhost',
+                                  user='root',
+                                  password='xxlong727',
+                                  database='model_ollama',
+                                  charset='utf8mb4')
+        with connect.cursor() as cursor:
+            
+            try:
+                query = """
+                        SELECT model.model_id, model.name, model.description, model.home, model.isdownloaded, model.type,
+                            parameters.para_id,parameters.size_storage
+                        FROM model
+                        JOIN parameters ON model.model_id = parameters.model_id
+                        WHERE model.type = 'vision';
+                        """
+                cursor.execute(query)
+                data = cursor.fetchall()
+                #print(1111111111111111111111)
+                #print(data)
+                row = 0
+                for model_data in data:
+                    table_widget.setItem(row, 0, QTableWidgetItem(model_data[1]))
+                    table_widget.setItem(row, 1, QTableWidgetItem(model_data[2]))
+                    table_widget.setItem(row, 2, QTableWidgetItem(model_data[7]))
+                    table_widget.setItem(row, 3, QTableWidgetItem(model_data[3]))
+                    table_widget.setItem(row, 4, QTableWidgetItem(str(model_data[4])))
+                    table_widget.setItem(row, 5, QTableWidgetItem(model_data[4]))
+                    # 为参数大小列添加QComboBox
+                    
+                    row += 1
+            except pymysql.MySQLError as e:
+                print(f"Error fetching data: {e}")
         #table_widget.setFixedHeight(650)
         widget_layout.addWidget(table_widget)
        
         vision_widget.setLayout(widget_layout)
 
         return vision_widget
-    
+#更多模型  
     def init_table_more(self):
 
         more_widget = QWidget()
@@ -177,6 +242,38 @@ class choose_page(QWidget):
             table_widget.setColumnWidth(i,width)
        # table_widget.setFixedHeight(650)
         table_widget.setHorizontalHeaderLabels(Tags[:-1])
+        connect = pymysql.connect(host='localhost',
+                                  user='root',
+                                  password='xxlong727',
+                                  database='model_ollama',
+                                  charset='utf8mb4')
+        with connect.cursor() as cursor:
+            
+            try:
+                query = """
+                        SELECT model.model_id, model.name, model.description, model.home, model.isdownloaded, model.type,
+                            parameters.para_id,parameters.size_storage
+                        FROM model
+                        JOIN parameters ON model.model_id = parameters.model_id
+                        WHERE model.type = 'more';
+                        """
+                cursor.execute(query)
+                data = cursor.fetchall()
+                #print(1111111111111111111111)
+                #print(data)
+                row = 0
+                for model_data in data:
+                    table_widget.setItem(row, 0, QTableWidgetItem(model_data[1]))
+                    table_widget.setItem(row, 1, QTableWidgetItem(model_data[2]))
+                    table_widget.setItem(row, 2, QTableWidgetItem(model_data[7]))
+                    table_widget.setItem(row, 3, QTableWidgetItem(model_data[3]))
+                    table_widget.setItem(row, 4, QTableWidgetItem(str(model_data[4])))
+                    table_widget.setItem(row, 5, QTableWidgetItem(model_data[4]))
+                    # 为参数大小列添加QComboBox
+                    
+                    row += 1
+            except pymysql.MySQLError as e:
+                print(f"Error fetching data: {e}")
         widget_layout.addWidget(table_widget)
        
         more_widget.setLayout(widget_layout)
