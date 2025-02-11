@@ -5,11 +5,10 @@ from PyQt5.QtWidgets import QTableWidget,QSpacerItem, QSizePolicy
 from PyQt5.QtWidgets import QTableWidgetItem,QComboBox
 from PyQt5.QtCore import Qt,QEvent
 
-import pymysql
+import pymysql,subprocess
 
 Width = [200,400,150,200,100,80]
 Tags = ["模型名","说明","参数-大小","主页","是否下载","类型"]
-
 
 
 #选择模型类
@@ -97,13 +96,16 @@ class choose_page(QWidget):
         seach_layout.addWidget(seach_text_area)
         
         btn_seach = QRadioButton("已下载")
-        btn_add= QPushButton("确认")
+        btn_add= QPushButton("下载")
+
+        #seach_text_area.textChanged.connect(lambda:self.filter_table)#连接搜索框的信号
+
         seach_layout.addWidget(btn_seach)
         seach_layout.addWidget(btn_add)
 
         widget_layout.addLayout(seach_layout)
         #表格组件
-        table_widget = QTableWidget(10,7)
+        table_widget = QTableWidget(50,7)
         for i,width in enumerate(Width):
             table_widget.setColumnWidth(i,width)
        # table_widget.setFixedHeight(650)
@@ -141,12 +143,29 @@ class choose_page(QWidget):
                     row += 1
             except pymysql.MySQLError as e:
                 print(f"Error fetching data: {e}")
+        seach_text_area.textChanged.connect(lambda:self.filter_table(seach_text_area,table_widget))#连接搜索框的信号
+
+        table_widget.cellClicked.connect(lambda row ,column :self.download_model(row,column,table_widget))
+
 
         widget_layout.addWidget(table_widget) 
-       
         tools_widget.setLayout(widget_layout)
 
         return tools_widget
+    
+    def download_model(self,row,column,table_widget):#下载功能
+        model_name = table_widget.item(row, 0).text()
+        model_size = table_widget.item(row, 2).text().split("-")[0]
+        name_size = model_name + ":" + model_size
+        #print(name_size)
+        try:
+        # 使用 subprocess.run 运行命令
+            result = subprocess.run(["ollama", "run",name_size], capture_output=True, text=True, check=True)
+            print(f"Command output:\n{result.stdout}")
+        except subprocess.CalledProcessError as e:
+            print(f"An error occurred: {e}")
+            print(f"Error output:\n{e.stderr}")
+    
 #视觉模型
     def init_table_vision(self):
 
@@ -162,16 +181,18 @@ class choose_page(QWidget):
         seach_text_area.setMaximumHeight(40)
         seach_text_area.setPlaceholderText("搜索模型...")
 
+        #seach_text_area.textChanged.connect(self.filter_table)#连接搜索框的信号
+
         seach_layout.addWidget(seach_text_area)
         
         btn_seach = QRadioButton("已下载")
-        btn_add= QPushButton("确认")
+        btn_add= QPushButton("下载")
         seach_layout.addWidget(btn_seach)
         seach_layout.addWidget(btn_add)
 
         widget_layout.addLayout(seach_layout)
         #表格组件
-        table_widget = QTableWidget(10,7)
+        table_widget = QTableWidget(20,7)
         for i,width in enumerate(Width):
             table_widget.setColumnWidth(i,width)
        # table_widget.setFixedHeight(650)
@@ -209,6 +230,8 @@ class choose_page(QWidget):
             except pymysql.MySQLError as e:
                 print(f"Error fetching data: {e}")
         #table_widget.setFixedHeight(650)
+        seach_text_area.textChanged.connect(lambda:self.filter_table(seach_text_area,table_widget))#连接搜索框的信号
+
         widget_layout.addWidget(table_widget)
        
         vision_widget.setLayout(widget_layout)
@@ -228,16 +251,18 @@ class choose_page(QWidget):
         seach_text_area.setPlaceholderText("搜索模型...")
        # seach_text_area.setFixedSize(300,40)
         seach_text_area.setMaximumHeight(40)
+        #seach_text_area.textChanged.connect(self.filter_table)#连接搜索框的信号
+
         seach_layout.addWidget(seach_text_area)
         
         btn_seach = QRadioButton("已下载")
-        btn_add= QPushButton("确认")
+        btn_add= QPushButton("下载")
         seach_layout.addWidget(btn_seach)
         seach_layout.addWidget(btn_add)
 
         widget_layout.addLayout(seach_layout)
         #表格组件
-        table_widget = QTableWidget(10,7)
+        table_widget = QTableWidget(100,7)
         for i,width in enumerate(Width):
             table_widget.setColumnWidth(i,width)
        # table_widget.setFixedHeight(650)
@@ -277,8 +302,24 @@ class choose_page(QWidget):
         widget_layout.addWidget(table_widget)
        
         more_widget.setLayout(widget_layout)
+        seach_text_area.textChanged.connect(lambda : self.filter_table(seach_text_area,table_widget))#连接搜索框的信号
 
         return more_widget
+    
+    def filter_table(self,seach_text_area,table_widget):#搜索功能
+        search_text = seach_text_area.toPlainText().strip()
+        if search_text:
+            for row in range(table_widget.rowCount()):#隐藏所有行
+                table_widget.setRowHidden(row, True)
+
+            for row in range(table_widget.rowCount()):
+                item = table_widget.item(row, 0)
+                if item and search_text.lower() in item.text().lower():  # 不区分大小写
+                    table_widget.setRowHidden(item.row(), False)#显示搜索到的行
+        elif not search_text:
+            for row in range(table_widget.rowCount()):
+                table_widget.setRowHidden(row, False)
+
 
 #聊天页
 class home_page(QWidget):
