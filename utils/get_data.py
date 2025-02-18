@@ -7,7 +7,53 @@ import json
 #   得到 名称 ，说明,分类 ，参数（2b，6b）等数据
 
 model_name =[ 
-     "https://ollama.com/library/llava"]
+    "https://ollama.com/library/llama3.2",
+    "https://ollama.com/library/llama3.1",
+    "https://ollama.com/library/gemma2",
+    "https://ollama.com/library/qwen2.5",
+    "https://ollama.com/library/phi3.5",
+    "https://ollama.com/library/nemotron-mini",
+    "https://ollama.com/library/mistral-small",
+    "https://ollama.com/library/mistral-nemo",
+    "https://ollama.com/library/deepseek-coder-v2",
+    "https://ollama.com/library/mistral",
+    "https://ollama.com/library/mixtral",
+    "https://ollama.com/library/codegemma",
+    "https://ollama.com/library/command-r",
+    "https://ollama.com/library/command-r-plus",
+    "https://ollama.com/library/llava",
+    "https://ollama.com/library/llama3",
+    "https://ollama.com/library/gemma",
+    "https://ollama.com/library/qwen",
+    "https://ollama.com/library/qwen2",
+    "https://ollama.com/library/phi3",
+    "https://ollama.com/library/llama2",
+    "https://ollama.com/library/nomic-embed-text",
+    "https://ollama.com/library/codellama",
+    "https://ollama.com/library/mxbai-embed-large",
+    "https://ollama.com/library/dolphin-mixtral",
+    "https://ollama.com/library/starcoder2",
+    "https://ollama.com/library/phi",
+    "https://ollama.com/library/deepseek-coder",
+    "https://ollama.com/library/llama2-uncensored",
+    "https://ollama.com/library/qwen2.5-coder",
+    "https://ollama.com/library/dolphin-mistral",
+    "https://ollama.com/library/tinyllama",
+    "https://ollama.com/library/yi",
+    "https://ollama.com/library/dolphin-llama3",
+    "https://ollama.com/library/orca-mini",
+    "https://ollama.com/library/zephyr",
+    "https://ollama.com/library/llava-llama3",
+    "https://ollama.com/library/snowflake-arctic-embed",
+    "https://ollama.com/library/starcoder",
+    "https://ollama.com/library/mistral-openorca",
+    "https://ollama.com/library/codestral",
+    "https://ollama.com/library/vicuna",
+    "https://ollama.com/library/granite-code",
+    "https://ollama.com/library/wizardlm2",
+    "https://ollama.com/library/wizard-vicuna-uncensored",
+    "https://ollama.com/library/llama2-chinese",
+    "https://ollama.com/library/codegeex4"]
 
 class get_library(): 
 
@@ -123,7 +169,7 @@ if __name__ == "__main__":
         # 插入数据
         try:
             with connect.cursor() as cursar:
-                sql_one = "insert into model(name,description,home,isdownloaded,type) values(%s,%s,%s,%s,%s)"
+                sql_one = "insert into model(name,description,home,type) values(%s,%s,%s,%s)"
                 cursar.execute(sql_one,(name,description,home,0,mode_type))
         
                 # 获取刚刚插入的model_id

@@ -1,3 +1,4 @@
+import time
 from PyQt5.QtWidgets import QApplication, QWidget, QPushButton, QDialog, QVBoxLayout, QLabel
 from PyQt5.QtWidgets import QHBoxLayout,QVBoxLayout,QStackedWidget
 from PyQt5.QtWidgets import QLineEdit,QTextEdit,QToolTip,QRadioButton
@@ -97,11 +98,13 @@ class choose_page(QWidget):
         
         btn_seach = QRadioButton("已下载")
         btn_add= QPushButton("下载")
+        btn_remove = QPushButton("删除")
 
         #seach_text_area.textChanged.connect(lambda:self.filter_table)#连接搜索框的信号
-
+        
         seach_layout.addWidget(btn_seach)
         seach_layout.addWidget(btn_add)
+        seach_layout.addWidget(btn_remove)
 
         widget_layout.addLayout(seach_layout)
         #表格组件
@@ -120,7 +123,7 @@ class choose_page(QWidget):
             
             try:
                 query = """
-                        SELECT model.model_id, model.name, model.description, model.home, model.isdownloaded, model.type,
+                        SELECT model.model_id, model.name, model.description, model.home, parameters.isdownloaded, model.type,
                             parameters.para_id,parameters.size_storage
                         FROM model
                         JOIN parameters ON model.model_id = parameters.model_id
@@ -143,9 +146,14 @@ class choose_page(QWidget):
                     row += 1
             except pymysql.MySQLError as e:
                 print(f"Error fetching data: {e}")
-        seach_text_area.textChanged.connect(lambda:self.filter_table(seach_text_area,table_widget))#连接搜索框的信号
 
-        table_widget.cellClicked.connect(lambda row ,column :self.download_model(row,column,table_widget))
+        seach_text_area.textChanged.connect(lambda : self.filter_table(seach_text_area,table_widget))#连接搜索框的信号
+        #table_widget.cellClicked.connect(lambda row ,column :self.download_model(row,column,table_widget))
+
+        #btn_add.clicked.connect(lambda : self.or_download(table_widget))#判断下载
+        btn_seach.toggled.connect(lambda checked: self.downloaded_table(table_widget,checked))# 筛选已下载的模型
+
+        table_widget.cellClicked.connect(lambda row,column :self.or_download(table_widget,btn_add,row,column))
 
 
         widget_layout.addWidget(table_widget) 
@@ -153,19 +161,19 @@ class choose_page(QWidget):
 
         return tools_widget
     
-    def download_model(self,row,column,table_widget):#下载功能
-        model_name = table_widget.item(row, 0).text()
-        model_size = table_widget.item(row, 2).text().split("-")[0]
-        name_size = model_name + ":" + model_size
-        #print(name_size)
-        try:
-        # 使用 subprocess.run 运行命令
-            result = subprocess.run(["ollama", "run",name_size], capture_output=True, text=True, check=True)
-            print(f"Command output:\n{result.stdout}")
-        except subprocess.CalledProcessError as e:
-            print(f"An error occurred: {e}")
-            print(f"Error output:\n{e.stderr}")
-    
+    # def download_model(self,row,column,table_widget):#下载功能
+    #     model_name = table_widget.item(row, 0).text()
+    #     model_size = table_widget.item(row, 2).text().split("-")[0]
+    #     name_size = model_name + ":" + model_size
+    #     #print(name_size)
+    #     try:
+    #     # 使用 subprocess.run 运行命令
+    #         result = subprocess.run(["ollama", "run",name_size], capture_output=True, text=True, check=True)
+    #         print(f"Command output:\n{result.stdout}")
+    #     except subprocess.CalledProcessError as e:
+    #         print(f"An error occurred: {e}")
+    #         print(f"Error output:\n{e.stderr}")
+
 #视觉模型
     def init_table_vision(self):
 
@@ -187,8 +195,12 @@ class choose_page(QWidget):
         
         btn_seach = QRadioButton("已下载")
         btn_add= QPushButton("下载")
+        btn_remove = QPushButton("删除")
+
+        
         seach_layout.addWidget(btn_seach)
         seach_layout.addWidget(btn_add)
+        seach_layout.addWidget(btn_remove)
 
         widget_layout.addLayout(seach_layout)
         #表格组件
@@ -206,7 +218,7 @@ class choose_page(QWidget):
             
             try:
                 query = """
-                        SELECT model.model_id, model.name, model.description, model.home, model.isdownloaded, model.type,
+                        SELECT model.model_id, model.name, model.description, model.home, parameters.isdownloaded, model.type,
                             parameters.para_id,parameters.size_storage
                         FROM model
                         JOIN parameters ON model.model_id = parameters.model_id
@@ -230,10 +242,16 @@ class choose_page(QWidget):
             except pymysql.MySQLError as e:
                 print(f"Error fetching data: {e}")
         #table_widget.setFixedHeight(650)
-        seach_text_area.textChanged.connect(lambda:self.filter_table(seach_text_area,table_widget))#连接搜索框的信号
+        seach_text_area.textChanged.connect(lambda : self.filter_table(seach_text_area,table_widget))#连接搜索框的信号
+        #table_widget.cellClicked.connect(lambda row ,column :self.download_model(row,column,table_widget))
+
+        #btn_add.clicked.connect(lambda : self.or_download(table_widget))
+        btn_seach.toggled.connect(lambda checked: self.downloaded_table(table_widget,checked))
+
+        table_widget.cellClicked.connect(lambda row,column :self.or_download(table_widget,btn_add,row,column))
+
 
         widget_layout.addWidget(table_widget)
-       
         vision_widget.setLayout(widget_layout)
 
         return vision_widget
@@ -256,9 +274,14 @@ class choose_page(QWidget):
         seach_layout.addWidget(seach_text_area)
         
         btn_seach = QRadioButton("已下载")
+
+        btn_remove = QPushButton("删除")
         btn_add= QPushButton("下载")
+        #btn_add.clicked.connect(lambda : self.or_download())
+        
         seach_layout.addWidget(btn_seach)
         seach_layout.addWidget(btn_add)
+        seach_layout.addWidget(btn_remove)
 
         widget_layout.addLayout(seach_layout)
         #表格组件
@@ -276,7 +299,7 @@ class choose_page(QWidget):
             
             try:
                 query = """
-                        SELECT model.model_id, model.name, model.description, model.home, model.isdownloaded, model.type,
+                        SELECT model.model_id, model.name, model.description, model.home, parameters.isdownloaded, model.type,
                             parameters.para_id,parameters.size_storage
                         FROM model
                         JOIN parameters ON model.model_id = parameters.model_id
@@ -302,7 +325,14 @@ class choose_page(QWidget):
         widget_layout.addWidget(table_widget)
        
         more_widget.setLayout(widget_layout)
+
         seach_text_area.textChanged.connect(lambda : self.filter_table(seach_text_area,table_widget))#连接搜索框的信号
+        #table_widget.cellClicked.connect(lambda row ,column :self.download_model(row,column,table_widget))
+
+        #btn_add.clicked.connect(lambda : self.or_download(table_widget)) #判断是否下载
+        btn_seach.toggled.connect(lambda checked: self.downloaded_table(table_widget,checked))#筛选已下载的模型
+        
+        table_widget.cellClicked.connect(lambda row,column :self.or_download(table_widget,btn_add,row,column))
 
         return more_widget
     
@@ -320,7 +350,124 @@ class choose_page(QWidget):
             for row in range(table_widget.rowCount()):
                 table_widget.setRowHidden(row, False)
 
+    def or_download(self,tabel_widget,btn_add,row,column):#判断是否下载
+        #点击下载才进行下载
+        btn_add.clicked.connect(lambda :self.download_model(row,column,tabel_widget))
+        
 
+    def download_model(self,row,column,table_widget):#下载功能
+         
+        model_name = table_widget.item(row, 0).text()
+        model_size = table_widget.item(row, 2).text().split("-")[0]
+        name_size = model_name + ":" + model_size
+        #print(name_size)
+        print("下载ing")
+        try:
+        # 使用 subprocess.run 运行命令
+            subprocess.run(["ollama", "run",name_size], capture_output=True, text=True, check=True)
+            return
+            #print(f"Command output:\n{result.stdout}")
+        except subprocess.CalledProcessError as e:
+            print(f"An error occurred: {e}")
+            print(f"Error output:\n{e.stderr}")
+
+    def downloaded_table(self,table_widget,checked):#已下载功能
+        
+        if checked:
+            
+            try:
+                # 运行 ollama list 命令并捕获输出
+                result = subprocess.run(["ollama", "list"], capture_output=True, text=True, check=True)
+                # 打印命令输出
+                # print(f"Command output:\n{result.stdout}")
+                # 返回命令输出
+                #time.sleep()
+            except subprocess.CalledProcessError as e:
+                print(f"An error occurred: {e}")
+                print(f"Error output:\n{e.stderr}")
+            output = result.stdout # 获取命令输出的结果
+            lines = output.strip().split("\n")[3:]
+            
+            for row in range(table_widget.rowCount()):#隐藏所有行
+                table_widget.setRowHidden(row, True)
+            if not lines:  # 如果没有数据
+                for row in range(table_widget.rowCount()):
+                    table_widget.setRowHidden(row, False)
+                print(lines)
+            
+            downloaded_models = set()
+            for line in lines:
+                name_size = line.split('b')[0] + 'b'
+                name = name_size.split(':')[0]
+                size = name_size.split(':')[1]
+                downloaded_models.add((name, size))
+
+            #print(downloaded_models)
+            # 遍历表格，更新 isdownloaded 字段
+            #print(table_widget.rowCount())
+            for row in range(table_widget.rowCount()):
+                #print(11111111111111)
+                item_name = table_widget.item(row, 0)
+                item_size = table_widget.item(row, 2)
+                
+              #  print(f"{item_name.text(),item_size.text()}")
+                
+                if item_name is None or item_size is None:#跳过空行
+                        print(f"Skipping row {row} due to missing data.")
+                        continue  # 跳过当前行
+                       
+                
+                if item_name and item_size:
+                    name = item_name.text().lower()
+                    size = item_size.text().split('-')[0]  # 假设 size 是 "3b-398MB" 格式
+                    
+                    if (name, size) in downloaded_models:
+                        #print(name,size)
+                        #print(downloaded_models)
+                        #print(item_size.text())
+                        # 如果当前行的模型已下载，设置 isdownloaded 为 1
+                        try :
+                            connect = pymysql.connect(host='localhost',
+                                    user='root',
+                                    password='xxlong727',
+                                    database='model_ollama',
+                                    charset='utf8mb4')
+                            with connect.cursor() as cursar:
+                                query = """
+                                UPDATE parameters 
+                                JOIN model ON model.model_id = parameters.model_id 
+                                SET parameters.isdownloaded = 1 
+                                WHERE model.name = %s AND parameters.size_storage = %s;
+                                """
+                                #pattern = f"%{size}-%"
+                                cursar.execute(query, (name, item_size.text()))
+                                connect.commit()
+                                table_widget.setRowHidden(row, False) 
+                        finally:
+                            cursar.close()
+                    else:
+                        # 如果当前行的模型未下载，设置 isdownloaded 为 0
+                        connect = pymysql.connect(host='localhost',
+                                  user='root',
+                                  password='xxlong727',
+                                  database='model_ollama',
+                                  charset='utf8mb4')
+                        try:
+                            with connect.cursor() as cursar:
+                                query = """
+                                UPDATE parameters 
+                                JOIN model ON model.model_id = parameters.model_id 
+                                SET parameters.isdownloaded = 0 
+                                WHERE model.name = %s AND parameters.size_storage = %s AND parameters.isdownloaded = 1;
+                                """
+                            # pattern = f"%{size}-%"
+                                cursar.execute(query, (name, item_size))
+                                connect.commit()
+                        finally:
+                            cursar.close()
+        elif not checked:#取消选中，显示所有行
+            for row in range(table_widget.rowCount()):
+                table_widget.setRowHidden(row, False) 
 #聊天页
 class home_page(QWidget):
     def __init__(self, parent =None):
