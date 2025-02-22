@@ -30,7 +30,7 @@ class MainWindow(QMainWindow):
         # 创建左侧按钮栏
        # self.left_Panel = QWidget()   self.left_Panel
         self.left_layout = QVBoxLayout()
-    
+     
         btn_start = QPushButton("首页")
         btn_start.setFixedHeight(100)
         btn_start.clicked.connect(lambda: self.stacked_widget.setCurrentIndex(0))
@@ -83,13 +83,13 @@ class MainWindow(QMainWindow):
 
     def homepage(self,str):#选择模型功能
 
-        from button_actions import home_page
+        from init_home_page import home_page
         win_home = home_page(self)
         return win_home
     
     def choosepage(self,str):#选择模型功能
 
-            from button_actions import choose_page
+            from init_choose_page import choose_page
             win_choose = choose_page(self)
             return win_choose
 
