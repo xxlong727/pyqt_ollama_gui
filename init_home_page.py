@@ -1,55 +1,39 @@
-from PyQt5.QtWidgets import QApplication, QWidget, QPushButton, QVBoxLayout, QLabel
+from PyQt5.QtWidgets import QWidget, QPushButton, QVBoxLayout, QLabel
 from PyQt5.QtWidgets import QHBoxLayout,QVBoxLayout
-from PyQt5.QtWidgets import QTextEdit
-from PyQt5.QtWidgets import QComboBox
 from PyQt5.QtWidgets import QDialog
 import ollama,asyncio,pymysql
 from PyQt5.QtCore import QThread, pyqtSignal,Qt
 from PyQt5.QtGui import QTextCursor, QTextBlockFormat
 
+from HeaderWidget import HeaderWidget
+from ShowWidget import ShowWidget
+from ChatWidget import ChatWidget
 class Data:
     db_message = []
 
+# 在home_page类中使用这些新类
 class home_page(QWidget):
-    def __init__(self, parent =None):
+    def __init__(self, parent=None):
         super().__init__(parent)
         self.resize(1200,900)
-        self.home_layout = QVBoxLayout(self)#总空间
-        #加载组件
-        self.home_layout.addLayout(self.init_head())
-        self.home_layout.addWidget(self.init_show())
-        self.home_layout.addLayout(self.init_chat())
-    
-    def init_head(self):
-        """#顶部控件"""
-        header_layout = QHBoxLayout()
-
-        btn_new = QPushButton("新建对话")
-        #btn_change = QPushButton("切换模型")
-        btn_store = QPushButton("保存对话")
-        btn_load = QPushButton("历史加载")
-
-        btn_new.setFixedHeight(100)
-        #btn_change.setFixedHeight(100)
-        btn_store.setFixedHeight(100)
-        btn_load.setFixedHeight(100)
-
-        btn_new.clicked.connect(lambda: self.reset_chat())
-        btn_store.clicked.connect(lambda: self.message_to_db())
-        btn_load.clicked.connect(lambda: self.load_message())
-
-        header_layout.addWidget(btn_new)
-        #header_layout.addWidget(btn_change)
-        header_layout.addWidget(btn_store)
-        header_layout.addWidget(btn_load)
-        return header_layout
+        self.home_layout = QVBoxLayout(self)
+        
+        # 创建widget实例
+        self.header_widget = HeaderWidget(self)
+        self.show_widget = ShowWidget(self)
+        self.chat_widget = ChatWidget(self)
+        
+        # 加载组件
+        self.home_layout.addLayout(self.header_widget.init_layout())
+        self.home_layout.addWidget(self.show_widget.init_layout())
+        self.home_layout.addLayout(self.chat_widget.init_layout())
     
     def reset_chat(self):
         print(1111111111111111)
         self.home_layout.takeAt(1)
         self.home_layout.takeAt(1)
-        self.home_layout.addWidget(self.init_show())
-        self.home_layout.addLayout(self.init_chat())
+        self.home_layout.addWidget(self.show_widget.init_layout())
+        self.home_layout.addLayout(self.chat_widget.init_layout())
     
     def message_to_db(self):
         """#保存对话"""
@@ -139,68 +123,6 @@ class home_page(QWidget):
                 self.db_messages = Data.db_message
                 return
 
-
-    def init_show(self):
-        """ #中间文本显示   """
-        self.text_area = QTextEdit()
-        self.text_area.setReadOnly(True)
-        self.text_area.setFontPointSize(15)
-        self.content = None
-
-        return self.text_area
-
-   
-    def init_chat(self):
-        """ #底部对话"""
-        chat_layout = QHBoxLayout()
-
-        chat_area = QTextEdit()
-        chat_area.setPlaceholderText("请输入对话内容")
-        chat_area.setFontPointSize(15)
-        chat_area.setBaseSize(800,100)
-        chat_area.setMaximumHeight(150)
-        chat_layout.addWidget(chat_area)
-
-        
-        chat_btn_layout = QVBoxLayout() #右侧的三个排布
-        choose_layout = QHBoxLayout()
-
-        btn_choose_file = QPushButton("选择文件")
-
-        self.db_messages = []
-        self.file_paths = None
-
-        label = QLabel("模型选择")#创建标签
-        model_path_label = QLabel("未选择文件")
-
-        btn_choose_file.clicked.connect(lambda: self.open_file_dialog(model_path_label)) #绑定事件
-
-
-        cbox_change = QComboBox()# 创建下拉框
-        cbox_change.addItems(self.get_model())
-        cbox_change.currentTextChanged.connect(self.on_model_changed)  # 连接信号到槽函数
-
-
-        self.current_model = cbox_change.currentText()#设置初始值
-
-        #cbox_change.addItem("切换模型")
-        btn_send = QPushButton("发送")
-        btn_send.setFixedSize(175,75)
-        btn_send.clicked.connect(lambda: self.send_message(chat_area,self.current_model,self.or_model(self.current_model))) #绑定事件
-        #btn_change.setFixedSize(175,75)
-
-        choose_layout.addWidget(label)
-        choose_layout.addWidget(btn_choose_file)
-
-        chat_btn_layout.addLayout(choose_layout)
-        chat_btn_layout.addWidget(model_path_label)
-        chat_btn_layout.addWidget(cbox_change)
-        chat_btn_layout.addWidget(btn_send)
-
-        chat_layout.addLayout(chat_btn_layout)
-
-        
-        return chat_layout
     def on_model_changed(self,text):
         self.current_model = text
 

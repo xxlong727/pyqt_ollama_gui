@@ -1,13 +1,17 @@
-import time,subprocess,os,sys
-from PyQt5.QtWidgets import QApplication, QWidget, QPushButton, QVBoxLayout, QLabel
+import subprocess
+from PyQt5.QtWidgets import  QWidget, QPushButton, QVBoxLayout, QLabel
 from PyQt5.QtWidgets import QHBoxLayout,QVBoxLayout,QStackedWidget
-from PyQt5.QtWidgets import QLineEdit,QTextEdit,QRadioButton
 from PyQt5.QtWidgets import QTableWidget
 from PyQt5.QtWidgets import QTableWidgetItem
 from PyQt5.QtCore import QThread
 
-import pymysql,subprocess,ollama
+import pymysql,subprocess
 
+from ToolsWidget import ToolsWidget
+from VisionWidget import VisionWidget
+from MoreWidget import MoreWidget
+
+Width_type = {'more':100,'tools':50,'vision':20}
 Width = [200,400,150,200,100,80]
 Tags = ["模型名","说明","参数-大小","主页","是否下载","类型"]
 
@@ -27,9 +31,13 @@ class choose_page(QWidget):
 
         self.table_stack = QStackedWidget()
 
-        self.table_stack.addWidget(self.init_table_tools())#创建tools界面
-        self.table_stack.addWidget(self.init_table_vision())#创建vision界面
-        self.table_stack.addWidget(self.init_table_more())#更多模型
+        self.init_table_tools = ToolsWidget(self)
+        self.init_table_vision = VisionWidget(self)
+        self.init_table_more = MoreWidget(self)
+
+        self.table_stack.addWidget(self.init_table_tools.Init())#创建tools界面
+        self.table_stack.addWidget(self.init_table_vision.Init())#创建vision界面
+        self.table_stack.addWidget(self.init_table_more.Init())#更多模型
 
         layout.addWidget(self.table_stack)
        
@@ -82,239 +90,6 @@ class choose_page(QWidget):
         modle_layout.addWidget(btn_vision)
         modle_layout.addWidget(btn_more)
         return modle_layout
-
-       
-#模型tools表
-    def init_table_tools(self):
-
-        tools_widget = QWidget()
-
-        widget_layout = QVBoxLayout()
-
-    
-        #创建水平视图#搜索栏
-        seach_layout = QHBoxLayout()
-        seach_text_area = QTextEdit()#搜索框
-       # seach_text_area.setFixedSize(300,40)
-        seach_text_area.setPlaceholderText("搜索模型...")
-
-        seach_text_area.setMaximumHeight(40)
-        seach_layout.addWidget(seach_text_area)
-        
-        btn_seach = QRadioButton("已下载")
-        btn_add= QPushButton("下载")
-        btn_remove = QPushButton("删除")
-
-        #seach_text_area.textChanged.connect(lambda:self.filter_table)#连接搜索框的信号
-        
-        seach_layout.addWidget(btn_seach)
-        seach_layout.addWidget(btn_add)
-        seach_layout.addWidget(btn_remove)
-
-        widget_layout.addLayout(seach_layout)
-        #表格组件
-        table_widget = QTableWidget(50,7)
-        for i,width in enumerate(Width):
-            table_widget.setColumnWidth(i,width)
-       # table_widget.setFixedHeight(650)
-        table_widget.setHorizontalHeaderLabels(Tags[:-1])#去掉最后一列
-
-        connect = pymysql.connect(host='localhost',
-                                  user='root',
-                                  password='xxlong727',
-                                  database='model_ollama',
-                                  charset='utf8mb4')
-        with connect.cursor() as cursor:
-            
-            try:
-                query = """
-                        SELECT model.model_id, model.name, model.description, model.home, parameters.isdownloaded, model.type,
-                            parameters.para_id,parameters.size_storage
-                        FROM model
-                        JOIN parameters ON model.model_id = parameters.model_id
-                        WHERE model.type = 'tools';
-                        """
-                cursor.execute(query)
-                data = cursor.fetchall()
-                #print(1111111111111111111111)
-                #print(data)
-                row = 0
-                for model_data in data:
-                    table_widget.setItem(row, 0, QTableWidgetItem(model_data[1]))
-                    table_widget.setItem(row, 1, QTableWidgetItem(model_data[2]))
-                    table_widget.setItem(row, 2, QTableWidgetItem(model_data[7]))
-                    table_widget.setItem(row, 3, QTableWidgetItem(model_data[3]))
-                    table_widget.setItem(row, 4, QTableWidgetItem(str(model_data[4])))
-                    table_widget.setItem(row, 5, QTableWidgetItem(model_data[4]))
-                    # 为参数大小列添加QComboBox
-                    
-                    row += 1
-            except pymysql.MySQLError as e:
-                print(f"Error fetching data: {e}")
-
-        seach_text_area.textChanged.connect(lambda : self.filter_table(seach_text_area,table_widget))#连接搜索框的信号
-        #table_widget.cellClicked.connect(lambda row ,column :self.download_model(row,column,table_widget))
-
-        #btn_add.clicked.connect(lambda : self.or_download(table_widget))#判断下载
-        btn_seach.toggled.connect(lambda checked: self.downloaded_table(table_widget,checked))# 筛选已下载的模型
-
-        table_widget.cellClicked.connect(lambda row,column :self.or_download(table_widget,btn_add,btn_remove,row,column))
-
-
-        widget_layout.addWidget(table_widget) 
-        tools_widget.setLayout(widget_layout)
-
-        return tools_widget
-    
-
-#视觉模型
-    def init_table_vision(self):
-
-        vision_widget = QWidget()
-        widget_layout = QVBoxLayout()
-        
-        #创建水平视图#搜索栏
-        seach_layout = QHBoxLayout()  
-        seach_text_area = QTextEdit()#搜索框
-       # seach_text_area.setFixedSize(300,40)
-        seach_text_area.setMaximumHeight(40)
-        seach_text_area.setPlaceholderText("搜索模型...")
-
-        #seach_text_area.textChanged.connect(self.filter_table)#连接搜索框的信号
-
-        seach_layout.addWidget(seach_text_area)
-        
-        btn_seach = QRadioButton("已下载")
-        btn_add= QPushButton("下载")
-        btn_remove = QPushButton("删除")
-
-        seach_layout.addWidget(btn_seach)
-        seach_layout.addWidget(btn_add)
-        seach_layout.addWidget(btn_remove)
-
-        widget_layout.addLayout(seach_layout)
-        #表格组件
-        table_widget = QTableWidget(20,7)
-        for i,width in enumerate(Width):
-            table_widget.setColumnWidth(i,width)
-       # table_widget.setFixedHeight(650)
-        table_widget.setHorizontalHeaderLabels(Tags[:-1])#去掉最后一列 
-        connect = pymysql.connect(host='localhost',
-                                  user='root',
-                                  password='xxlong727',
-                                  database='model_ollama',
-                                  charset='utf8mb4')
-        with connect.cursor() as cursor:
-            
-            try:
-                query = """
-                        SELECT model.model_id, model.name, model.description, model.home, parameters.isdownloaded, model.type,
-                            parameters.para_id,parameters.size_storage
-                        FROM model
-                        JOIN parameters ON model.model_id = parameters.model_id
-                        WHERE model.type = 'vision';
-                        """
-                cursor.execute(query)
-                data = cursor.fetchall()
-                #print(1111111111111111111111)
-                #print(data)
-                row = 0
-                for model_data in data:
-                    table_widget.setItem(row, 0, QTableWidgetItem(model_data[1]))
-                    table_widget.setItem(row, 1, QTableWidgetItem(model_data[2]))
-                    table_widget.setItem(row, 2, QTableWidgetItem(model_data[7]))
-                    table_widget.setItem(row, 3, QTableWidgetItem(model_data[3]))
-                    table_widget.setItem(row, 4, QTableWidgetItem(str(model_data[4])))
-                    table_widget.setItem(row, 5, QTableWidgetItem(model_data[4]))
-                    row += 1
-            except pymysql.MySQLError as e:
-                print(f"Error fetching data: {e}")
-        #table_widget.setFixedHeight(650)
-        seach_text_area.textChanged.connect(lambda : self.filter_table(seach_text_area,table_widget))#连接搜索框的信号
-        #table_widget.cellClicked.connect(lambda row ,column :self.download_model(row,column,table_widget))
-
-        #btn_add.clicked.connect(lambda : self.or_download(table_widget))
-        btn_seach.toggled.connect(lambda checked: self.downloaded_table(table_widget,checked))
-        table_widget.cellClicked.connect(lambda row,column :self.or_download(table_widget,btn_add,btn_remove,row,column))
-
-        widget_layout.addWidget(table_widget)
-        vision_widget.setLayout(widget_layout)
-
-        return vision_widget
-#更多模型  
-    def init_table_more(self):
-
-        more_widget = QWidget()
-        widget_layout = QVBoxLayout()
-
-        #创建水平视图#搜索栏
-        seach_layout = QHBoxLayout()
-        seach_text_area = QTextEdit()#搜索框
-        seach_text_area.setPlaceholderText("搜索模型...")
-       # seach_text_area.setFixedSize(300,40)
-        seach_text_area.setMaximumHeight(40)
-        #seach_text_area.textChanged.connect(self.filter_table)#连接搜索框的信号
-
-        seach_layout.addWidget(seach_text_area)
-        
-        btn_seach = QRadioButton("已下载")
-        btn_remove = QPushButton("删除")
-        btn_add= QPushButton("下载")
-        #btn_add.clicked.connect(lambda : self.or_download())
-        
-        seach_layout.addWidget(btn_seach)
-        seach_layout.addWidget(btn_add)
-        seach_layout.addWidget(btn_remove)
-
-        widget_layout.addLayout(seach_layout)
-        #表格组件
-        table_widget = QTableWidget(100,7)
-        for i,width in enumerate(Width):
-            table_widget.setColumnWidth(i,width)
-       # table_widget.setFixedHeight(650)
-        table_widget.setHorizontalHeaderLabels(Tags[:-1])
-        connect = pymysql.connect(host='localhost',
-                                  user='root',
-                                  password='xxlong727',
-                                  database='model_ollama',
-                                  charset='utf8mb4')
-        with connect.cursor() as cursor:
-            try:
-                query = """
-                        SELECT model.model_id, model.name, model.description, model.home, parameters.isdownloaded, model.type,
-                            parameters.para_id,parameters.size_storage
-                        FROM model
-                        JOIN parameters ON model.model_id = parameters.model_id
-                        WHERE model.type = 'more';
-                        """
-                cursor.execute(query)
-                data = cursor.fetchall()
-                #print(1111111111111111111111)
-                #print(data)
-                row = 0
-                for model_data in data:
-                    table_widget.setItem(row, 0, QTableWidgetItem(model_data[1]))
-                    table_widget.setItem(row, 1, QTableWidgetItem(model_data[2]))
-                    table_widget.setItem(row, 2, QTableWidgetItem(model_data[7]))
-                    table_widget.setItem(row, 3, QTableWidgetItem(model_data[3]))
-                    table_widget.setItem(row, 4, QTableWidgetItem(str(model_data[4])))
-                    table_widget.setItem(row, 5, QTableWidgetItem(model_data[4]))
-                   
-                    row += 1
-            except pymysql.MySQLError as e:
-                print(f"Error fetching data: {e}")
-        widget_layout.addWidget(table_widget)
-       
-        more_widget.setLayout(widget_layout)
-
-        seach_text_area.textChanged.connect(lambda : self.filter_table(seach_text_area,table_widget))#连接搜索框的信号
-        #table_widget.cellClicked.connect(lambda row ,column :self.download_model(row,column,table_widget))
-
-        #btn_add.clicked.connect(lambda : self.or_download(table_widget)) #判断是否下载
-        btn_seach.toggled.connect(lambda checked: self.downloaded_table(table_widget,checked))#筛选已下载的模型
-        table_widget.cellClicked.connect(lambda row,column :self.or_download(table_widget,btn_add,btn_remove,row,column))
-
-        return more_widget
     
     def filter_table(self,seach_text_area,table_widget):#搜索功能
         search_text = seach_text_area.toPlainText().strip()
@@ -385,6 +160,45 @@ class choose_page(QWidget):
     #         print(f"An error occurred: {e}")
     #         print(f"Error output:\n{e.stderr}")
   
+    def load_data(self,type):
+        table_widget = QTableWidget(Width_type[f"{type}"],7)
+        for i,width in enumerate(Width):
+            table_widget.setColumnWidth(i,width)
+       # table_widget.setFixedHeight(650)
+        table_widget.setHorizontalHeaderLabels(Tags[:-1])#去掉最后一列 
+        connect = pymysql.connect(host='localhost',
+                                  user='root',
+                                  password='xxlong727',
+                                  database='model_ollama',
+                                  charset='utf8mb4')
+        with connect.cursor() as cursor:
+            
+            try:
+                query = f"""
+                        SELECT model.model_id, model.name, model.description, model.home, parameters.isdownloaded, model.type,
+                            parameters.para_id,parameters.size_storage
+                        FROM model
+                        JOIN parameters ON model.model_id = parameters.model_id
+                        WHERE model.type = '{type}';
+                        """
+                cursor.execute(query)
+                data = cursor.fetchall()
+                #print(1111111111111111111111)
+                #print(data)
+                row = 0
+                for model_data in data:
+                    table_widget.setItem(row, 0, QTableWidgetItem(model_data[1]))
+                    table_widget.setItem(row, 1, QTableWidgetItem(model_data[2]))
+                    table_widget.setItem(row, 2, QTableWidgetItem(model_data[7]))
+                    table_widget.setItem(row, 3, QTableWidgetItem(model_data[3]))
+                    table_widget.setItem(row, 4, QTableWidgetItem(str(model_data[4])))
+                    table_widget.setItem(row, 5, QTableWidgetItem(model_data[4]))
+                    row += 1
+            except pymysql.MySQLError as e:
+                print(f"Error fetching data: {e}")
+
+        return table_widget
+    
 
     def downloaded_table(self,table_widget,checked):#已下载功能
         
