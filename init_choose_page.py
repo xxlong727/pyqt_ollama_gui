@@ -18,6 +18,7 @@ Tags = ["模型名","说明","参数-大小","主页","是否下载","类型"]
 
 #选择模型类
 class choose_page(QWidget):
+    """从界面包括下载删除模型功能"""
     def __init__(self, parent =None):
         super().__init__(parent) 
 
@@ -91,7 +92,8 @@ class choose_page(QWidget):
         modle_layout.addWidget(btn_more)
         return modle_layout
     
-    def filter_table(self,seach_text_area,table_widget):#搜索功能
+    def filter_table(self,seach_text_area,table_widget):
+        """#搜索功能,查找对应的模型"""
         search_text = seach_text_area.toPlainText().strip()
         if search_text:
             for row in range(table_widget.rowCount()):#隐藏所有行
@@ -105,7 +107,8 @@ class choose_page(QWidget):
             for row in range(table_widget.rowCount()):
                 table_widget.setRowHidden(row, False)
     
-    def remove_model(self,row,table_widget):#删除模型
+    def remove_model(self,row,table_widget):
+        """#删除模型"""
         model_name = table_widget.item(row, 0).text()
         model_size = table_widget.item(row, 2).text().split("-")[0]
         name_size = model_name + ":" + model_size
@@ -128,7 +131,7 @@ class choose_page(QWidget):
             connect.close()
 
     def or_download(self,tabel_widget,btn_add,btn_remove,row,column):#判断是否下载
-        #点击下载才进行下载
+        """#点击下载才进行下载"""
         from utils.download import Download
         #print(11111111111111111111111)
         download = Download()
@@ -161,6 +164,7 @@ class choose_page(QWidget):
     #         print(f"Error output:\n{e.stderr}")
   
     def load_data(self,type):
+        """创建一个表格并进行数据加载"""
         table_widget = QTableWidget(Width_type[f"{type}"],7)
         for i,width in enumerate(Width):
             table_widget.setColumnWidth(i,width)
@@ -201,7 +205,7 @@ class choose_page(QWidget):
     
 
     def downloaded_table(self,table_widget,checked):#已下载功能
-        
+        """筛选已下载的模型"""
         if checked:
             
             try:

@@ -13,6 +13,9 @@ class Data:
 
 # 在home_page类中使用这些新类
 class home_page(QWidget):
+    """home_page:首页
+    包括:新建对话,保存对话,历史加载
+    显示栏，输入栏，选择模型，选择文件，发送按钮"""
     def __init__(self, parent=None):
         super().__init__(parent)
         self.resize(1200,900)
@@ -40,11 +43,6 @@ class home_page(QWidget):
         import json
         if not self.db_messages:
             return
-        
-        
-
-        db_message_json = json.dumps(self.db_messages,ensure_ascii=False)
-        
         connect = pymysql.connect(host='localhost',
                                   user='root',
                                   password='xxlong727',
@@ -127,7 +125,8 @@ class home_page(QWidget):
         self.current_model = text
 
     """如果 open_file_dialog 方法从未被调用,self.file_paths 将不会被定义，从而导致 AttributeError。"""
-    def open_file_dialog(self,model_path_label): #打开文件选择对话框
+    def open_file_dialog(self,model_path_label): 
+        """#打开文件选择对话框"""
         from PyQt5.QtWidgets import QFileDialog
         self.file_paths = None
         self.file_paths, _ = QFileDialog.getOpenFileNames(self, "选择多个文件", "", "图片文件(*.jpg *.png)")
@@ -137,6 +136,7 @@ class home_page(QWidget):
             model_path_label.setText("未选择文件")
     #
     def send_message(self,text_area,model,type):
+        """向服务端发送数据"""
         message = text_area.toPlainText()
         if self.file_paths != None:
             path = self.file_paths[0]
@@ -293,6 +293,7 @@ class load_page(QDialog):
         #self.show()
 
     def title(self):
+        """获得全部的第一个提问"""
         import json
         title = []
         for me in self.db_message:
@@ -303,6 +304,7 @@ class load_page(QDialog):
             #print(type(mess))
         return title
     def content(self):
+        """获得全部的对话内容"""
         import json
         content = []
         for me in self.db_message:
@@ -362,6 +364,7 @@ class tip_message(QWidget):
 
         self.load_page.close()
     def remove(self):
+        """删除对应的记录"""
         connect = pymysql.connect(host='localhost',
                                   user='root',
                                   password='xxlong727',
