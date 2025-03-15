@@ -4,7 +4,7 @@ from PyQt5.QtWidgets import QDialog
 import ollama,asyncio,pymysql
 from PyQt5.QtCore import QThread, pyqtSignal,Qt
 from PyQt5.QtGui import QTextCursor, QTextBlockFormat
-
+from init_setting_page import AppConfig
 from HeaderWidget import HeaderWidget
 from ShowWidget import ShowWidget
 from ChatWidget import ChatWidget
@@ -30,7 +30,9 @@ class home_page(QWidget):
         self.home_layout.addLayout(self.header_widget.init_layout())
         self.home_layout.addWidget(self.show_widget.init_layout())
         self.home_layout.addLayout(self.chat_widget.init_layout())
-    
+        config = AppConfig()
+        self.db_config = config.get_config()#得到配置文件
+        print(self.db_config)
     def reset_chat(self):
         print(1111111111111111)
         self.home_layout.takeAt(1)
@@ -43,11 +45,7 @@ class home_page(QWidget):
         import json
         if not self.db_messages:
             return
-        connect = pymysql.connect(host='localhost',
-                                  user='root',
-                                  password='xxlong727',
-                                  database='model_ollama',
-                                  charset='utf8mb4')
+        connect = pymysql.connect(**self.db_config)
         try:
             #print(db_message_json)
             with connect.cursor() as cursor:
@@ -94,11 +92,7 @@ class home_page(QWidget):
         """#历史加载"""
        # print(self.db_messages[0]["content"])
         
-        connect = pymysql.connect(host='localhost',
-                                    user='root',
-                                    password='xxlong727',
-                                    database='model_ollama',
-                                    charset='utf8mb4')
+        connect = pymysql.connect(**self.db_config)
         try:
             with connect.cursor() as cursor:
                 sql = """
@@ -203,11 +197,7 @@ class home_page(QWidget):
     def or_model(self,model): 
         """#判断哪种功能模型"""
         print(model)
-        connect = pymysql.connect(host='localhost',
-                                  user='root',
-                                  password='xxlong727',
-                                  database='model_ollama',
-                                  charset='utf8mb4')
+        connect = pymysql.connect(**self.db_config)
         with connect.cursor() as cursor:
             sql = """
             SELECT type FROM model WHERE name = %s"""
@@ -365,11 +355,7 @@ class tip_message(QWidget):
         self.load_page.close()
     def remove(self):
         """删除对应的记录"""
-        connect = pymysql.connect(host='localhost',
-                                  user='root',
-                                  password='xxlong727',
-                                  database='model_ollama',
-                                  charset='utf8mb4')
+        connect = pymysql.connect(**AppConfig.get_config())
         try:
             with connect.cursor() as cursor:
                 print(11111111111)
@@ -386,10 +372,12 @@ class tip_message(QWidget):
             print(e)
         finally:
             connect.close()
-        """
+            """
         保存逻辑，需要判断是不是已经存入的数据，
         通过第一个问题的判断
         添加进保存的方法中"""
+            return
+        
 
 
     def append_message(self, text, align):

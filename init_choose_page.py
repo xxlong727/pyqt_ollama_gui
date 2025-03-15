@@ -7,6 +7,7 @@ from PyQt5.QtCore import QThread
 
 import pymysql,subprocess
 
+from init_setting_page import AppConfig
 from ToolsWidget import ToolsWidget
 from VisionWidget import VisionWidget
 from MoreWidget import MoreWidget
@@ -35,6 +36,8 @@ class choose_page(QWidget):
         self.init_table_tools = ToolsWidget(self)
         self.init_table_vision = VisionWidget(self)
         self.init_table_more = MoreWidget(self)
+        config = AppConfig()
+        self.db_config = config.get_config()#引入配置文件
 
         self.table_stack.addWidget(self.init_table_tools.Init())#创建tools界面
         self.table_stack.addWidget(self.init_table_vision.Init())#创建vision界面
@@ -64,9 +67,9 @@ class choose_page(QWidget):
         self.table_stack.removeWidget(self.table_stack.widget(0))
         self.table_stack.removeWidget(self.table_stack.widget(0))
 
-        self.table_stack.addWidget(self.init_table_tools())
-        self.table_stack.addWidget(self.init_table_vision())
-        self.table_stack.addWidget(self.init_table_more())
+        self.table_stack.addWidget(self.init_table_tools.Init())
+        self.table_stack.addWidget(self.init_table_vision.Init())
+        self.table_stack.addWidget(self.init_table_more.Init())
         
         self.table_stack.setCurrentIndex(0)
 
@@ -113,11 +116,7 @@ class choose_page(QWidget):
         model_size = table_widget.item(row, 2).text().split("-")[0]
         name_size = model_name + ":" + model_size
         subprocess.run(["ollama", "rm",name_size], capture_output=True, text=True, check=True)
-        connect = pymysql.connect(host='localhost',
-                                    user='root',
-                                    password='xxlong727',
-                                    database='model_ollama',
-                                    charset='utf8mb4')
+        connect = pymysql.connect(**self.db_config)
         with connect.cursor() as cursor:
             sql = """
                     UPDATE parameters 
@@ -165,16 +164,13 @@ class choose_page(QWidget):
   
     def load_data(self,type):
         """创建一个表格并进行数据加载"""
+        
         table_widget = QTableWidget(Width_type[f"{type}"],7)
         for i,width in enumerate(Width):
             table_widget.setColumnWidth(i,width)
        # table_widget.setFixedHeight(650)
         table_widget.setHorizontalHeaderLabels(Tags[:-1])#去掉最后一列 
-        connect = pymysql.connect(host='localhost',
-                                  user='root',
-                                  password='xxlong727',
-                                  database='model_ollama',
-                                  charset='utf8mb4')
+        connect = pymysql.connect(**self.db_config)
         with connect.cursor() as cursor:
             
             try:
@@ -260,11 +256,7 @@ class choose_page(QWidget):
                         #print(item_size.text())
                         # 如果当前行的模型已下载，设置 isdownloaded 为 1
                         try :
-                            connect = pymysql.connect(host='localhost',
-                                    user='root',
-                                    password='xxlong727',
-                                    database='model_ollama',
-                                    charset='utf8mb4')
+                            connect = pymysql.connect(**self.db_config)
                             with connect.cursor() as cursar:
                                 query = """
                                 UPDATE parameters 
@@ -281,11 +273,7 @@ class choose_page(QWidget):
                     else:
                         # 如果当前行的模型未下载，设置 isdownloaded 为 0
                         #print(name,size)
-                        connect = pymysql.connect(host='localhost',
-                                  user='root',
-                                  password='xxlong727',
-                                  database='model_ollama',
-                                  charset='utf8mb4')
+                        connect = pymysql.connect(**self.db_config)
                         try:
                             with connect.cursor() as cursar:
                                 query = """
